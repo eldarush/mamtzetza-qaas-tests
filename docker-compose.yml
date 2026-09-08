@@ -9,10 +9,11 @@ services:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_port_connectivity"]
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 10s
 
   mocker:
     build:
@@ -51,7 +52,9 @@ services:
       context: .
       dockerfile: src/OmegaFireflyTests/Dockerfile
     container_name: qaas-runner-tests
-    entrypoint: ["sh", "-c", "sleep 3 && dotnet OmegaFireflyTests.dll run test-docker.qaas.yaml"]
+    entrypoint: ["sh", "-c", "sleep 15 && dotnet OmegaFireflyTests.dll run test-docker.qaas.yaml"]
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       component:
         condition: service_started
