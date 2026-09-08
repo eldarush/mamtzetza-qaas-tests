@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OmegaFireflyMocker/OmegaFireflyMocker.csproj" />
+    <Project Path="src/OmegaFireflyTests/OmegaFireflyTests.csproj" />
+  </Folder>
+</Solution>

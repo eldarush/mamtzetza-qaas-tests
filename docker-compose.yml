@@ -1,0 +1,57 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mocker:
+    build:
+      context: .
+      dockerfile: src/OmegaFireflyMocker/Dockerfile
+    container_name: qaas-mocker
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  component:
+    build:
+      context: ../omega-firefly-component
+      dockerfile: Dockerfile
+    container_name: omega-firefly-component
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mocker:
+        condition: service_started
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: admin
+      RABBITMQ_PASSWORD: admin
+      INPUT_EXCHANGE: omega-solider-input
+      INPUT_QUEUE: omega-solider-input-queue
+      OUTPUT_EXCHANGE: firefly-expert-output
+      ENABLE_EXTERNAL_API: "true"
+      EXTERNAL_API_BASE_URL: http://mocker:8080
+
+  tests:
+    build:
+      context: .
+      dockerfile: src/OmegaFireflyTests/Dockerfile
+    container_name: qaas-runner-tests
+    entrypoint: ["sh", "-c", "sleep 3 && dotnet OmegaFireflyTests.dll run test-docker.qaas.yaml"]
+    depends_on:
+      component:
+        condition: service_started

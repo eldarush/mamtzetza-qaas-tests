@@ -1,0 +1,72 @@
+MetaData:
+  Team: QualityEngineering
+  System: OmegaFirefly
+
+DataSources:
+  - Name: GeneratedOmegaSoldiers
+    Generator: OmegaSoliderGenerator
+    GeneratorConfiguration:
+      Count: 5
+      IdPrefix: "SOL-"
+      FavoriteSnack: "Quantum Doritos"
+
+Sessions:
+  - Name: OmegaToFireflyRoundTrip
+    Publishers:
+      - Name: SoldierPublisher
+        DataSourceNames: [GeneratedOmegaSoldiers]
+        Policies:
+          - LoadBalance:
+              Rate: 20
+        RabbitMq:
+          Host: rabbitmq
+          Port: 5672
+          Username: admin
+          Password: admin
+          ExchangeName: omega-solider-input
+          RoutingKey: /
+
+    Consumers:
+      - Name: FireflyConsumer
+        TimeoutMs: 15000
+        RabbitMq:
+          Host: rabbitmq
+          Port: 5672
+          Username: admin
+          Password: admin
+          ExchangeName: firefly-expert-output
+          RoutingKey: /
+        Deserialize:
+          Deserializer: ProtobufMessage
+          SpecificType:
+            AssemblyName: OmegaSolider
+            TypeFullName: OmegaSolider.Messages.FireflyExpert
+
+Assertions:
+  - Name: HermeticThroughput
+    Assertion: HermeticByInputOutputPercentage
+    SessionNames: [OmegaToFireflyRoundTrip]
+    AssertionConfiguration:
+      InputNames: [SoldierPublisher]
+      OutputNames: [FireflyConsumer]
+      ExpectedPercentage: 100
+
+  - Name: MaxProcessingDelay
+    Assertion: DelayByChunks
+    SessionNames: [OmegaToFireflyRoundTrip]
+    AssertionConfiguration:
+      Input:
+        Name: SoldierPublisher
+        ChunkSize: 1
+      Output:
+        Name: FireflyConsumer
+        ChunkSize: 1
+      MaximumDelayMs: 10000
+
+  - Name: TransformationBusinessLogic
+    Assertion: FireflyLogicalAssertion
+    SessionNames: [OmegaToFireflyRoundTrip]
+    AssertionConfiguration:
+      ExpectedBuffName: "Quantum Disco Sparkles"
+      ExpectedBonusGlow: 50
+      ExpectExternalApiEnabled: true

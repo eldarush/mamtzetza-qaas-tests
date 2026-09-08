@@ -1,0 +1,31 @@
+Stubs:
+  - Name: BuffStub
+    Processor: BuffProcessor
+    ProcessorConfiguration:
+      DefaultBuffName: Quantum Disco Sparkles
+      DefaultBonusGlow: 50
+      StatusCode: 200
+
+  - Name: FunnyTitleStub
+    Processor: FunnyTitleProcessor
+    ProcessorConfiguration:
+      DefaultTitle: Supreme Commander of Crispy Snacks
+      DefaultLore: Fights crime with crunch.
+      StatusCode: 200
+
+Servers:
+  - Http:
+      Port: 8080
+      IsLocalhost: false
+      Endpoints:
+        - Path: /api/v1/buff/{soldierId}
+          Actions:
+            - Name: GetSoldierBuff
+              Method: Get
+              TransactionStubName: BuffStub
+
+        - Path: /api/v1/funny-title
+          Actions:
+            - Name: PostFunnyTitle
+              Method: Post
+              TransactionStubName: FunnyTitleStub
