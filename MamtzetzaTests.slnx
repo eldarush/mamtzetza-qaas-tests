@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="mocker/MamtzetzaMocker.csproj" />
+  <Project Path="tests/MamtzetzaTests.csproj" />
+</Solution>

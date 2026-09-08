@@ -14,13 +14,13 @@ jobs:
     - name: Checkout Tests Repo
       uses: actions/checkout@v4
       with:
-        path: omega-firefly-qaas-tests
+        path: mamtzetza-qaas-tests
 
     - name: Checkout Component Repo
       uses: actions/checkout@v4
       with:
-        repository: eldarush/omega-firefly-component
-        path: omega-firefly-component
+        repository: eldarush/Mamtzetza
+        path: Mamtzetza
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -28,12 +28,12 @@ jobs:
         dotnet-version: '10.0.x'
 
     - name: Restore and Build
-      working-directory: omega-firefly-qaas-tests
+      working-directory: mamtzetza-qaas-tests
       run: |
-        dotnet restore OmegaFireflyQaaSTests.slnx --configfile NuGet.config
-        dotnet build OmegaFireflyQaaSTests.slnx --no-restore -c Release
+        dotnet restore MamtzetzaTests.slnx --configfile NuGet.config
+        dotnet build MamtzetzaTests.slnx --no-restore -c Release
 
     - name: Run Docker Compose End-to-End Tests
-      working-directory: omega-firefly-qaas-tests
+      working-directory: mamtzetza-qaas-tests
       run: |
         docker compose up --build --abort-on-container-exit --exit-code-from tests

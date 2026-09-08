@@ -18,19 +18,19 @@ services:
   mocker:
     build:
       context: .
-      dockerfile: src/OmegaFireflyMocker/Dockerfile
-    container_name: qaas-mocker
+      dockerfile: mocker/Dockerfile
+    container_name: mamtzetza-mocker
     ports:
       - "8080:8080"
     depends_on:
       rabbitmq:
         condition: service_healthy
 
-  component:
+  mamtzetza:
     build:
-      context: ../omega-firefly-component
+      context: ../Mamtzetza
       dockerfile: Dockerfile
-    container_name: omega-firefly-component
+    container_name: mamtzetza
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -50,11 +50,11 @@ services:
   tests:
     build:
       context: .
-      dockerfile: src/OmegaFireflyTests/Dockerfile
-    container_name: qaas-runner-tests
-    entrypoint: ["sh", "-c", "sleep 15 && dotnet OmegaFireflyTests.dll run test-docker.qaas.yaml"]
+      dockerfile: tests/Dockerfile
+    container_name: mamtzetza-runner-tests
+    entrypoint: ["sh", "-c", "sleep 15 && dotnet MamtzetzaTests.dll run test-docker.qaas.yaml"]
     depends_on:
       rabbitmq:
         condition: service_healthy
-      component:
+      mamtzetza:
         condition: service_started
