@@ -16,6 +16,7 @@ services:
       start_period: 10s
 
   mocker:
+    image: mamtzetza-mocker:latest
     build:
       context: .
       dockerfile: mocker/Dockerfile
@@ -27,10 +28,13 @@ services:
         condition: service_healthy
 
   mamtzetza:
+    image: mamtzetza:latest
     build:
       context: ../Mamtzetza
       dockerfile: Dockerfile
     container_name: mamtzetza
+    ports:
+      - "9090:9090"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -46,8 +50,10 @@ services:
       OUTPUT_EXCHANGE: firefly-expert-output
       ENABLE_EXTERNAL_API: "true"
       EXTERNAL_API_BASE_URL: http://mocker:8080
+      METRICS_PORT: 9090
 
   tests:
+    image: mamtzetza-tests:latest
     build:
       context: .
       dockerfile: tests/Dockerfile
@@ -58,3 +64,30 @@ services:
         condition: service_healthy
       mamtzetza:
         condition: service_started
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mamtzetza-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - mamtzetza
+
+  elasticsearch:
+    image: elasticsearch:7.17.18
+    container_name: mamtzetza-elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: mamtzetza-fluent-bit
+    volumes:
+      - ./observability/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+    depends_on:
+      - elasticsearch

@@ -35,11 +35,11 @@ public class FunnyTitleProcessor : BaseTransactionProcessor<FunnyTitleProcessorC
             {
                 var bodyStr = Encoding.UTF8.GetString(bodyBytes);
                 var jsonNode = JsonNode.Parse(bodyStr);
-                var snack = jsonNode?["favoriteSnack"]?.ToString();
-                if (!string.IsNullOrWhiteSpace(snack))
+                var food = jsonNode?["favoriteFood"]?.ToString() ?? jsonNode?["favoriteSnack"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(food))
                 {
-                    title = $"Supreme Commander of {snack}";
-                    lore = $"Wields the sacred energy of {snack} in the dark.";
+                    title = $"Supreme Commander of {food}";
+                    lore = $"Wields the sacred energy of {food} in the dark.";
                 }
             }
             catch

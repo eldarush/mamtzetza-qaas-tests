@@ -8,7 +8,7 @@ DataSources:
     GeneratorConfiguration:
       Count: 5
       IdPrefix: "SOL-"
-      FavoriteSnack: "Quantum Doritos"
+      FavoriteFood: "Shawarma"
 
 Sessions:
   - Name: OmegaToFireflyRoundTrip
@@ -43,6 +43,31 @@ Sessions:
             TypeFullName: OmegaSolider.Messages.FireflyExpert
 
 Assertions:
+  # Test 1: Logical Transformation (All 12 fields preserved, 5 deterministic fields computed correctly)
+  - Name: TransformationBusinessLogic
+    Assertion: FireflyLogicalAssertion
+    SessionNames: [OmegaToFireflyRoundTrip]
+    AssertionConfiguration:
+      ExpectedBuffName: "Quantum Disco Sparkles"
+      ExpectedBonusGlow: 50
+      ExpectExternalApiEnabled: true
+
+  # Test 2: External API Mock Enrichment (GET buff + POST funny-title verified)
+  - Name: ExternalApiEnrichment
+    Assertion: FireflyApiEnrichmentAssertion
+    SessionNames: [OmegaToFireflyRoundTrip]
+    AssertionConfiguration:
+      ExpectedBuffName: "Quantum Disco Sparkles"
+      ExpectedBonusGlow: 50
+
+  # Test 3: Fault Tolerance & Graceful Fallback
+  - Name: ExternalApiFallback
+    Assertion: FireflyFallbackAssertion
+    SessionNames: [OmegaToFireflyRoundTrip]
+    AssertionConfiguration:
+      FallbackPrefix: "API Error Fallback"
+
+  # Test 4: Hermetic Zero Loss (100% of input messages published reach output)
   - Name: HermeticThroughput
     Assertion: HermeticByInputOutputPercentage
     SessionNames: [OmegaToFireflyRoundTrip]
@@ -51,6 +76,7 @@ Assertions:
       OutputNames: [FireflyConsumer]
       ExpectedPercentage: 100
 
+  # Test 5: Latency SLA Threshold (< 10,000ms delay per chunk)
   - Name: MaxProcessingDelay
     Assertion: DelayByChunks
     SessionNames: [OmegaToFireflyRoundTrip]
@@ -63,10 +89,25 @@ Assertions:
         ChunkSize: 1
       MaximumDelayMs: 10000
 
-  - Name: TransformationBusinessLogic
-    Assertion: FireflyLogicalAssertion
+  # Test 6: Stress & Throughput Stability (Zero packet loss under load)
+  - Name: StressThroughputBurst
+    Assertion: FireflyStressAssertion
     SessionNames: [OmegaToFireflyRoundTrip]
     AssertionConfiguration:
-      ExpectedBuffName: "Quantum Disco Sparkles"
-      ExpectedBonusGlow: 50
-      ExpectExternalApiEnabled: true
+      MinimumExpectedCount: 5
+
+  # Test 7: Prometheus Metrics Observability Endpoint (/metrics HTTP 200 & active counters)
+  - Name: MetricsObservabilityEndpoint
+    Assertion: MamtzetzaMetricsAssertion
+    SessionNames: [OmegaToFireflyRoundTrip]
+    AssertionConfiguration:
+      Host: "mamtzetza"
+      Port: 9090
+      Path: "/metrics"
+
+  # Test 8: Structured JSON Logs Compliance (Fluent Bit / Fluentd / Elasticsearch format)
+  - Name: StructuredJsonLogsCompliance
+    Assertion: MamtzetzaLogsAssertion
+    SessionNames: [OmegaToFireflyRoundTrip]
+    AssertionConfiguration:
+      ExpectedLoggerPrefix: "Mamtzetza"
