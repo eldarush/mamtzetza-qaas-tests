@@ -9,7 +9,7 @@
 
 This is an **executable, production-ready reference test suite** that actively tests and validates that the `Mamtzetza` microservice works correctly in an event-driven, observable containerized environment.
 
-As an instructor, you can use this repository as a **golden reference / answer key** to compare student submissions and suggestions against, verifying that their generators, mockers, session configurations, and assertions adhere to best practices.
+As an instructor, you can use this repository as a **golden reference / answer key** to compare student submissions and suggestions against. Wherever possible, the test suite leverages official built-in hooks from **`QaaS.Common.Assertions`** (such as `OutputDeserializableTo`, `HermeticByInputOutputPercentage`, `HermeticByExpectedOutputCount`, `DelayByChunks`, and `DelayByAverage`), keeping custom hooks to the absolute required minimum.
 
 Included in the root directory is **`tests_specification.xlsx`**, an Excel spreadsheet detailing all 8 test specifications:
 `Test Type, Input, Expected output, Test Description, Notes`
@@ -18,16 +18,16 @@ Included in the root directory is **`tests_specification.xlsx`**, an Excel sprea
 
 ## 📊 Summary of the 8 Reference Tests
 
-| Test ID | Test Name | Test Type | Description |
-| :--- | :--- | :--- | :--- |
-| **TEST-01** | `TransformationBusinessLogic` | Functional / Logic | Verifies all 12 input soldier fields are preserved and the 5 specialization fields are deterministically computed (`favorite_technology`, `favorite_team`, `favorite_commander`, `favorite_woman`, `favorite_coding_language`). |
-| **TEST-02** | `ExternalApiEnrichment` | Integration / Mocking | Validates integration with QaaS HTTP Mocker (GET buff + POST funny-title), verifying bonus glow and comedic buff composition. |
-| **TEST-03** | `ExternalApiFallback` | Fault Tolerance / Resilience | Asserts that Mamtzetza degrades gracefully (`API Error Fallback` or unbuffed state) without crashing or dropping messages if external endpoints fail. |
-| **TEST-04** | `HermeticThroughput` | Reliability / Integrity | Asserts 100% input/output message delivery across RabbitMQ exchanges using `HermeticByInputOutputPercentage`. |
-| **TEST-05** | `MaxProcessingDelay` | Performance / SLA | Asserts chunk-by-chunk transit latency strictly conforms to the < 10,000ms SLA using `DelayByChunks`. |
-| **TEST-06** | `StressThroughputBurst` | Stress / Load | Stresses consumer deserialization and message processing under high-volume burst load with zero packet loss. |
-| **TEST-07** | `MetricsObservabilityEndpoint` | Observability / Metrics | Scrapes `http://<host>:9090/metrics` via HTTP and validates Prometheus exposition format with active message counters. |
-| **TEST-08** | `StructuredJsonLogsCompliance` | Observability / Logging | Verifies single-line structured JSON logs (`Timestamp`, `LogLevel`, `Message`, `State`) formatted for Fluent Bit / Fluentd and Elasticsearch ingestion. |
+| Test ID | Test Name | Hook Type | Assertion Hook | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **TEST-01** | `TransformationBusinessLogic` | **Custom Hook** | `FireflyLogicalAssertion` | Verifies all 12 input soldier fields are preserved and the 5 specialization fields are deterministically computed (`favorite_technology`, `favorite_team`, `favorite_commander`, `favorite_woman`, `favorite_coding_language`), base glow, and mock comedic buff. |
+| **TEST-02** | `OutputContractValidation` | **QaaS.Common.Assertions** | `OutputDeserializableTo` | Validates wire contract compliance, asserting that consumed RabbitMQ payloads successfully deserialize into the `OmegaSolider.Messages.FireflyExpert` Protobuf contract. |
+| **TEST-03** | `ExpectedBatchOutputCount` | **QaaS.Common.Assertions** | `HermeticByExpectedOutputCount` | Asserts exact batch output count matching (5 messages received) without queue truncation or buffer drops. |
+| **TEST-04** | `HermeticThroughput` | **QaaS.Common.Assertions** | `HermeticByInputOutputPercentage` | Asserts 100% input/output message delivery across RabbitMQ exchanges and queues with zero message loss. |
+| **TEST-05** | `MaxProcessingDelayByChunks` | **QaaS.Common.Assertions** | `DelayByChunks` | Asserts chunk-by-chunk transit latency strictly conforms to the < 10,000ms SLA. |
+| **TEST-06** | `ProcessingDelayByAverage` | **QaaS.Common.Assertions** | `DelayByAverage` | Measures and enforces average round-trip transit processing latency under 5,000ms. |
+| **TEST-07** | `MetricsObservabilityEndpoint` | **Custom Hook** | `MamtzetzaMetricsAssertion` | Scrapes `http://<host>:9090/metrics` via HTTP and validates Prometheus exposition format with active message counters. |
+| **TEST-08** | `StructuredJsonLogsCompliance` | **Custom Hook** | `MamtzetzaLogsAssertion` | Verifies single-line structured JSON logs (`Timestamp`, `LogLevel`, `Category`, `Message`, `State`) formatted for Fluent Bit / Fluentd and Elasticsearch ingestion. |
 
 ---
 
@@ -50,12 +50,11 @@ mamtzetza-qaas-tests/
 │
 ├── tests/                           # 🧪 QaaS.Runner Test Suite
 │   ├── Assertions/
-│   │   ├── FireflyLogicalAssertion.cs       # Validates 12 preserved + 5 derived fields + base glow
-│   │   ├── FireflyApiEnrichmentAssertion.cs  # Validates external HTTP mocker enrichment
-│   │   ├── FireflyFallbackAssertion.cs       # Validates fault-tolerance and degraded fallback
-│   │   ├── FireflyStressAssertion.cs         # Validates burst throughput and zero drops
-│   │   ├── MamtzetzaMetricsAssertion.cs      # Scrapes Prometheus /metrics on port 9090
-│   │   └── MamtzetzaLogsAssertion.cs         # Validates structured JSON logging schema
+│   │   ├── FireflyLogicalAssertion.cs       # Custom: 12 preserved + 5 derived fields + base glow + buff
+│   │   ├── MamtzetzaMetricsAssertion.cs      # Custom: Scrapes Prometheus /metrics on port 9090
+│   │   └── MamtzetzaLogsAssertion.cs         # Custom: Validates structured JSON logging schema
+│   │   # (Built-in assertions OutputDeserializableTo, HermeticByInputOutputPercentage,
+│   │   #  HermeticByExpectedOutputCount, DelayByChunks, DelayByAverage imported via QaaS.Common.Assertions)
 │   ├── Generators/
 │   │   └── OmegaSoliderGenerator.cs         # Generates diverse Protobuf archetypes
 │   ├── Dockerfile                   # Builds mamtzetza-runner-tests container
@@ -118,7 +117,7 @@ docker compose up --build --abort-on-container-exit --exit-code-from tests
 2. **QaaS Mocker**: Listens on port `8080`, mocking GET `/api/v1/buff/{id}` and POST `/api/v1/funny-title`.
 3. **Mamtzetza**: Connects to RabbitMQ, starts consuming from `omega-solider-input-queue`, emits single-line JSON logs to stdout, and exposes Prometheus metrics on port `9090`.
 4. **Prometheus**: Automatically scrapes `http://mamtzetza:9090/metrics` every 5 seconds on host port `9091`.
-5. **QaaS Test Runner**: Generates sample soldier records, publishes them, consumes the output, executes all 8 assertions, and exits with code `0`.
+5. **QaaS Test Runner**: Generates sample soldier records, publishes them, consumes the output, executes all 8 assertions (including `OutputDeserializableTo`, `DelayByChunks`, `DelayByAverage`, `HermeticByInputOutputPercentage`, `HermeticByExpectedOutputCount`), and exits with code `0`.
 
 ---
 

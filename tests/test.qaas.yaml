@@ -36,14 +36,9 @@ Sessions:
           Password: admin
           ExchangeName: firefly-expert-output
           RoutingKey: /
-        Deserialize:
-          Deserializer: ProtobufMessage
-          SpecificType:
-            AssemblyName: OmegaSolider
-            TypeFullName: OmegaSolider.Messages.FireflyExpert
 
 Assertions:
-  # Test 1: Logical Transformation (All 12 fields preserved, 5 deterministic fields computed correctly)
+  # Test 1 (Custom): Domain Business Logic & Field Derivations
   - Name: TransformationBusinessLogic
     Assertion: FireflyLogicalAssertion
     SessionNames: [OmegaToFireflyRoundTrip]
@@ -52,22 +47,27 @@ Assertions:
       ExpectedBonusGlow: 50
       ExpectExternalApiEnabled: true
 
-  # Test 2: External API Mock Enrichment (GET buff + POST funny-title verified)
-  - Name: ExternalApiEnrichment
-    Assertion: FireflyApiEnrichmentAssertion
+  # Test 2 (QaaS.Common.Assertions): Protobuf Contract Deserialization Validation
+  - Name: OutputContractValidation
+    Assertion: OutputDeserializableTo
     SessionNames: [OmegaToFireflyRoundTrip]
     AssertionConfiguration:
-      ExpectedBuffName: "Quantum Disco Sparkles"
-      ExpectedBonusGlow: 50
+      OutputName: FireflyConsumer
+      Deserialize:
+        Deserializer: ProtobufMessage
+        SpecificType:
+          AssemblyName: OmegaSolider
+          TypeFullName: OmegaSolider.Messages.FireflyExpert
 
-  # Test 3: Fault Tolerance & Graceful Fallback
-  - Name: ExternalApiFallback
-    Assertion: FireflyFallbackAssertion
+  # Test 3 (QaaS.Common.Assertions): Batch Expected Output Count Verification
+  - Name: ExpectedBatchOutputCount
+    Assertion: HermeticByExpectedOutputCount
     SessionNames: [OmegaToFireflyRoundTrip]
     AssertionConfiguration:
-      FallbackPrefix: "API Error Fallback"
+      OutputNames: [FireflyConsumer]
+      ExpectedCount: 5
 
-  # Test 4: Hermetic Zero Loss (100% of input messages published reach output)
+  # Test 4 (QaaS.Common.Assertions): Hermetic Zero Loss Throughput (100%)
   - Name: HermeticThroughput
     Assertion: HermeticByInputOutputPercentage
     SessionNames: [OmegaToFireflyRoundTrip]
@@ -76,8 +76,8 @@ Assertions:
       OutputNames: [FireflyConsumer]
       ExpectedPercentage: 100
 
-  # Test 5: Latency SLA Threshold (< 10,000ms delay per chunk)
-  - Name: MaxProcessingDelay
+  # Test 5 (QaaS.Common.Assertions): Maximum Chunk Transit Delay (< 10,000ms)
+  - Name: MaxProcessingDelayByChunks
     Assertion: DelayByChunks
     SessionNames: [OmegaToFireflyRoundTrip]
     AssertionConfiguration:
@@ -89,14 +89,16 @@ Assertions:
         ChunkSize: 1
       MaximumDelayMs: 10000
 
-  # Test 6: Stress & Throughput Stability (Zero packet loss under load)
-  - Name: StressThroughputBurst
-    Assertion: FireflyStressAssertion
+  # Test 6 (QaaS.Common.Assertions): Average Transit Delay (< 5,000ms)
+  - Name: ProcessingDelayByAverage
+    Assertion: DelayByAverage
     SessionNames: [OmegaToFireflyRoundTrip]
     AssertionConfiguration:
-      MinimumExpectedCount: 5
+      InputName: SoldierPublisher
+      OutputName: FireflyConsumer
+      MaximumDelayMs: 5000
 
-  # Test 7: Prometheus Metrics Observability Endpoint (/metrics HTTP 200 & active counters)
+  # Test 7 (Custom): Prometheus Metrics Observability Endpoint (/metrics HTTP 200 & active counters)
   - Name: MetricsObservabilityEndpoint
     Assertion: MamtzetzaMetricsAssertion
     SessionNames: [OmegaToFireflyRoundTrip]
@@ -105,7 +107,7 @@ Assertions:
       Port: 9090
       Path: "/metrics"
 
-  # Test 8: Structured JSON Logs Compliance (Fluent Bit / Fluentd / Elasticsearch format)
+  # Test 8 (Custom): Structured JSON Logging Schema (Fluent Bit / Fluentd / Elasticsearch format)
   - Name: StructuredJsonLogsCompliance
     Assertion: MamtzetzaLogsAssertion
     SessionNames: [OmegaToFireflyRoundTrip]
