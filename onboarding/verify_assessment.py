@@ -34,11 +34,13 @@ for phase,expected in [('before',1),('after',0)]:
         file.write_text(source.replace(old,'if (age < 35) return "C#";'),encoding='utf-8')
     for index,command in enumerate(commands):
         kind='e2e' if index else 'unit'
-        result=subprocess.run(command,cwd=out,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,errors='replace')
-        (out/f'{phase}-{kind}.log').write_text(result.stdout,encoding='utf-8')
+        log_path=out/f'{phase}-{kind}.log'
+        with log_path.open('w',encoding='utf-8') as stream:
+            result=subprocess.run(command,cwd=out,stdout=stream,stderr=subprocess.STDOUT,text=True)
+        output=log_path.read_text(encoding='utf-8',errors='replace')
         if result.returncode!=expected:
-            print(result.stdout[-10000:]);raise SystemExit(f'{phase} {kind}: expected exit {expected}, got {result.returncode}')
-        if kind=='unit' and phase=='before' and ('ReportedBoundaryBehavior' not in result.stdout or 'AgeBoundaries' not in result.stdout):
+            print(output[-10000:]);raise SystemExit(f'{phase} {kind}: expected exit {expected}, got {result.returncode}')
+        if kind=='unit' and phase=='before' and ('ReportedBoundaryBehavior' not in output or 'AgeBoundaries' not in output):
             raise SystemExit('Expected both the seeded service and retargeted starter to reject the boundary.')
         if kind=='e2e':
             suite=lab/'mamtzetza-qaas-tests'
