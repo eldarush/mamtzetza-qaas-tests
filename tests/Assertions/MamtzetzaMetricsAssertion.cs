@@ -11,6 +11,7 @@ public record MamtzetzaMetricsAssertionConfig
     public int Port { get; set; } = 9090;
     public string Path { get; set; } = "/metrics";
     public string BaselinePath { get; set; } = "evidence/baseline.json";
+    public string FinalScrapePath { get; set; } = "evidence/final.prom";
     public bool ExpectExternalApiEnabled { get; set; } = true;
 }
 
@@ -24,6 +25,7 @@ public class MamtzetzaMetricsAssertion : BaseAssertion<MamtzetzaMetricsAssertion
             var baseline = EvidenceBaseline.Load(Configuration.BaselinePath);
             using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
             var content = client.GetStringAsync($"http://{Configuration.Host}:{Configuration.Port}{Configuration.Path}").GetAwaiter().GetResult();
+            File.WriteAllText(Configuration.FinalScrapePath, content);
             EvidenceValidation.ValidateMetrics(baseline.Metrics, EvidenceValidation.ParseMetrics(content), inputs.Count, Configuration.ExpectExternalApiEnabled);
             AssertionMessage = $"Counter and histogram deltas match isolated batch of {inputs.Count}; zero processing/API errors.";
             return true;
