@@ -15,7 +15,7 @@ services:
       start_period: 10s
 
   mocker:
-    image: mamtzetza-mocker:latest
+    image: ${COMPOSE_PROJECT_NAME:-qaas-onboarding}-mocker:local
     build:
       context: .
       dockerfile: mocker/Dockerfile
@@ -26,7 +26,7 @@ services:
         condition: service_healthy
 
   mamtzetza:
-    image: mamtzetza:latest
+    image: ${COMPOSE_PROJECT_NAME:-qaas-onboarding}-mamtzetza:local
     build:
       context: ../Mamtzetza
       dockerfile: Dockerfile
@@ -53,7 +53,7 @@ services:
       - run-evidence:/app/evidence
 
   tests:
-    image: mamtzetza-tests:latest
+    image: ${COMPOSE_PROJECT_NAME:-qaas-onboarding}-tests:local
     build:
       context: .
       dockerfile: tests/Dockerfile

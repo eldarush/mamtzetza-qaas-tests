@@ -21,7 +21,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: eldarush/Mamtzetza
-        ref: 0a27fcdea0e86e3353aed1ef1dccdd11d4c126c1
+        ref: 81d5caecbdef50df3b0e9adf39d7c74746158428
         path: Mamtzetza
 
     - name: Setup .NET
