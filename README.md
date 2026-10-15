@@ -4,7 +4,7 @@ This repository tests one isolated **five-message batch**. It is a reference imp
 
 ## Reproducible layout and prerequisites
 
-Use .NET SDK **10.0.203**, Docker Desktop with Linux containers and Compose v2, Git, and PowerShell 7 for the helper script. Package references are exact: Runner 4.8.2, Mocker 2.4.7, Common.Assertions/Generators 3.5.6, OmegaSolider 1.1.0. SDK and container versions are pinned in the source; local NuGet packages are in `packages/`. Restores still need nuget.org for dependencies. See restore audit warnings in verification evidence before production use.
+Use .NET SDK **10.0.203**, Docker Desktop with Linux containers and Compose v2, Git, and PowerShell 7 for the helper script. Package references are exact: Runner 4.8.2, Mocker 2.4.7, Common.Assertions/Generators 3.5.6, OmegaSolider 1.1.0. SDK and container versions are pinned in the source; transitive dependencies are recorded in `packages.lock.json` and CI/container restores use `--locked-mode`. Local NuGet packages are in `packages/`. Restores still need nuget.org for dependencies. See restore audit warnings in verification evidence before production use.
 
 Place these repositories side by side (Compose uses `../Mamtzetza`):
 

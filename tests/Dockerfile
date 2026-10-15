@@ -5,7 +5,7 @@ COPY NuGet.config .
 COPY packages/ packages/
 COPY tests/ tests/
 
-RUN dotnet restore tests/MamtzetzaTests.csproj --configfile NuGet.config
+RUN dotnet restore tests/MamtzetzaTests.csproj --configfile NuGet.config --locked-mode
 RUN dotnet publish tests/MamtzetzaTests.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0.7
