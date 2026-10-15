@@ -44,6 +44,10 @@ jobs:
       run: |
         docker compose -p qaas-onboarding-ci up --build --abort-on-container-exit --exit-code-from tests
 
+    - name: Verify documented assessment commands reject seeded source and accept repair
+      working-directory: mamtzetza-qaas-tests
+      run: python onboarding/verify_assessment.py --e2e --output ../assessment-verification
+
     - name: Capture stack evidence
       if: always()
       working-directory: mamtzetza-qaas-tests
@@ -61,6 +65,8 @@ jobs:
           mamtzetza-qaas-tests/ci-evidence
           mamtzetza-qaas-tests/allure-results
           mamtzetza-qaas-tests/regression/TestResults
+          assessment-verification/*.log
+          assessment-verification/*.json
 
     - name: Cleanup isolated stack
       if: always()
