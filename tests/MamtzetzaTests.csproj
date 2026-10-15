@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="fixtures/**/*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="test.qaas.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

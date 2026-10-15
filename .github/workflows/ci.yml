@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
     - name: Checkout Tests Repo
@@ -20,12 +21,13 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: eldarush/Mamtzetza
+        ref: 0a27fcdea0e86e3353aed1ef1dccdd11d4c126c1
         path: Mamtzetza
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0.x'
+        dotnet-version: '10.0.203'
 
     - name: Restore and Build
       working-directory: mamtzetza-qaas-tests
@@ -33,7 +35,34 @@ jobs:
         dotnet restore MamtzetzaTests.slnx --configfile NuGet.config
         dotnet build MamtzetzaTests.slnx --no-restore -c Release
 
+    - name: Assertion regression tests
+      working-directory: mamtzetza-qaas-tests
+      run: dotnet test regression/AssertionRegressionTests.csproj --no-build -c Release --logger trx
+
     - name: Run Docker Compose End-to-End Tests
       working-directory: mamtzetza-qaas-tests
       run: |
-        docker compose up --build --abort-on-container-exit --exit-code-from tests
+        docker compose -p qaas-onboarding-ci up --build --abort-on-container-exit --exit-code-from tests
+
+    - name: Capture stack evidence
+      if: always()
+      working-directory: mamtzetza-qaas-tests
+      run: |
+        mkdir -p ci-evidence
+        docker compose -p qaas-onboarding-ci logs --no-color > ci-evidence/compose.log
+        docker compose -p qaas-onboarding-ci cp tests:/app/evidence/. ci-evidence/ || true
+
+    - name: Upload verification evidence
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: qaas-onboarding-evidence
+        path: |
+          mamtzetza-qaas-tests/ci-evidence
+          mamtzetza-qaas-tests/allure-results
+          mamtzetza-qaas-tests/regression/TestResults
+
+    - name: Cleanup isolated stack
+      if: always()
+      working-directory: mamtzetza-qaas-tests
+      run: docker compose -p qaas-onboarding-ci down --volumes --remove-orphans
