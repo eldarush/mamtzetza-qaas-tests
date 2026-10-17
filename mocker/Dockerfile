@@ -1,14 +1,14 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.203 AS build
 WORKDIR /src
 
 COPY NuGet.config .
 COPY packages/ packages/
 COPY mocker/ mocker/
 
-RUN dotnet restore mocker/MamtzetzaMocker.csproj --configfile NuGet.config
+RUN dotnet restore mocker/MamtzetzaMocker.csproj --configfile NuGet.config --locked-mode
 RUN dotnet publish mocker/MamtzetzaMocker.csproj -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.7
 WORKDIR /app
 COPY --from=build /app/publish .
 

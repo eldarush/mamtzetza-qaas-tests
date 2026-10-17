@@ -1,181 +1,89 @@
-# Mamtzetza Reference QaaS Test Suite & Mocker
+# Mamtzetza QaaS reference suite and teacher solution
 
-> **Working Tests Example & Teacher's Solution Key**  
-> This repository is the official reference implementation for testing the [Mamtzetza](https://github.com/eldarush/Mamtzetza) microservice using the **QaaS (Quality as a Service)** ecosystem (`QaaS.Runner 4.8.2`, `QaaS.Mocker 2.4.7`, `QaaS.Common.Assertions 3.5.6`, `QaaS.Common.Generators 3.5.6`).
+This repository tests one isolated **five-message batch**. It is a reference implementation for training, with explicit regression tests for its custom assertions. It does not establish stress, sustained throughput, continuous-stream reliability, or production readiness.
 
----
+## Reproducible layout and prerequisites
 
-## 🎯 Purpose of this Repository
+Use .NET SDK **10.0.203**, Docker Desktop with Linux containers and Compose v2, Git, and PowerShell 7 for the helper script. Package references are exact: Runner 4.8.2, Mocker 2.4.7, Common.Assertions/Generators 3.5.6, OmegaSolider 1.1.0. SDK and container versions are pinned in the source; transitive dependencies are recorded in `packages.lock.json` and CI/container restores use `--locked-mode`. Local NuGet packages are in `packages/`. Restores still need nuget.org for dependencies. See restore audit warnings in verification evidence before production use.
 
-This is an **executable, production-ready reference test suite** that actively tests and validates that the `Mamtzetza` microservice works correctly in an event-driven, observable containerized environment.
+Place these repositories side by side (Compose uses `../Mamtzetza`):
 
-As an instructor, you can use this repository as a **golden reference / answer key** to compare student submissions and suggestions against. Wherever possible, the test suite leverages official built-in hooks from **`QaaS.Common.Assertions`** (such as `OutputDeserializableTo`, `HermeticByInputOutputPercentage`, `HermeticByExpectedOutputCount`, `DelayByChunks`, and `DelayByAverage`), keeping custom hooks to the absolute required minimum.
-
-Included in the root directory is **`tests_specification.xlsx`**, an Excel spreadsheet detailing all 8 test specifications:
-`Test Type, Input, Expected output, Test Description, Notes`
-
----
-
-## 📊 Summary of the 8 Reference Tests
-
-| Test ID | Test Name | Hook Type | Assertion Hook | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| **TEST-01** | `TransformationBusinessLogic` | **Custom Hook** | `FireflyLogicalAssertion` | Verifies all 12 input soldier fields are preserved and the 5 specialization fields are deterministically computed (`favorite_technology`, `favorite_team`, `favorite_commander`, `favorite_woman`, `favorite_coding_language`), base glow, and mock comedic buff. |
-| **TEST-02** | `OutputContractValidation` | **QaaS.Common.Assertions** | `OutputDeserializableTo` | Validates wire contract compliance, asserting that consumed RabbitMQ payloads successfully deserialize into the `OmegaSolider.Messages.FireflyExpert` Protobuf contract. |
-| **TEST-03** | `ExpectedBatchOutputCount` | **QaaS.Common.Assertions** | `HermeticByExpectedOutputCount` | Asserts exact batch output count matching (5 messages received) without queue truncation or buffer drops. |
-| **TEST-04** | `HermeticThroughput` | **QaaS.Common.Assertions** | `HermeticByInputOutputPercentage` | Asserts 100% input/output message delivery across RabbitMQ exchanges and queues with zero message loss. |
-| **TEST-05** | `MaxProcessingDelayByChunks` | **QaaS.Common.Assertions** | `DelayByChunks` | Asserts chunk-by-chunk transit latency strictly conforms to the < 10,000ms SLA. |
-| **TEST-06** | `ProcessingDelayByAverage` | **QaaS.Common.Assertions** | `DelayByAverage` | Measures and enforces average round-trip transit processing latency under 5,000ms. |
-| **TEST-07** | `MetricsObservabilityEndpoint` | **Custom Hook** | `MamtzetzaMetricsAssertion` | Scrapes `http://<host>:9090/metrics` via HTTP and validates Prometheus exposition format with active message counters. |
-| **TEST-08** | `StructuredJsonLogsCompliance` | **Custom Hook** | `MamtzetzaLogsAssertion` | Verifies single-line structured JSON logs (`Timestamp`, `LogLevel`, `Category`, `Message`, `State`) formatted for Fluent Bit / Fluentd and Elasticsearch ingestion. |
-
----
-
-## 🏗 Repository Structure
-
-```
-mamtzetza-qaas-tests/
-├── tests_specification.xlsx         # 📑 Excel specification describing the 8 tests
-├── docker-compose.yml               # 🐳 Complete stack: RabbitMQ, Mocker, Mamtzetza, Prometheus, Elastic, Fluent-Bit, Tests
-├── NuGet.config                     # Configured for local packages + nuget.org
-│
-├── mocker/                          # 🎭 QaaS.Mocker HTTP Server
-│   ├── Processors/
-│   │   ├── BuffProcessor.cs         # GET /api/v1/buff/{soldierId}
-│   │   └── FunnyTitleProcessor.cs   # POST /api/v1/funny-title (supports favoriteFood & favoriteSnack)
-│   ├── Dockerfile                   # Builds mamtzetza-mocker container
-│   ├── MamtzetzaMocker.csproj       # .NET 10 project using QaaS.Mocker 2.4.7
-│   ├── Program.cs                   # Mocker host startup
-│   └── mocker.qaas.yaml             # Declarative routes & stubs configuration
-│
-├── tests/                           # 🧪 QaaS.Runner Test Suite
-│   ├── Assertions/
-│   │   ├── FireflyLogicalAssertion.cs       # Custom: 12 preserved + 5 derived fields + base glow + buff
-│   │   ├── MamtzetzaMetricsAssertion.cs      # Custom: Scrapes Prometheus /metrics on port 9090
-│   │   └── MamtzetzaLogsAssertion.cs         # Custom: Validates structured JSON logging schema
-│   │   # (Built-in assertions OutputDeserializableTo, HermeticByInputOutputPercentage,
-│   │   #  HermeticByExpectedOutputCount, DelayByChunks, DelayByAverage imported via QaaS.Common.Assertions)
-│   ├── Generators/
-│   │   └── OmegaSoliderGenerator.cs         # Generates diverse Protobuf archetypes
-│   ├── Dockerfile                   # Builds mamtzetza-runner-tests container
-│   ├── MamtzetzaTests.csproj        # .NET 10 project using QaaS.Runner 4.8.2
-│   ├── Program.cs                   # Runner CLI entrypoint
-│   ├── test.qaas.yaml               # Test session for local host execution (127.0.0.1)
-│   └── test-docker.qaas.yaml        # Test session for Docker network execution (rabbitmq, mamtzetza)
-│
-├── observability/                   # 📈 Observability Stack Configurations
-│   ├── prometheus.yml               # Scrape config for Mamtzetza metrics (port 9090)
-│   └── fluent-bit.conf              # Fluent Bit forwarder shipping JSON logs to Elasticsearch
-│
-└── packages/                        # 📦 Local Protobuf NuGet package
-    └── OmegaSolider.1.1.0.nupkg     # Protobuf contracts for OmegaSolider & FireflyExpert
+```text
+workspace/
+  OmegaSolider/
+  Mamtzetza/
+  mamtzetza-qaas-tests/
 ```
 
----
+For a delivered bundle, use its included `sources/` directories together. For independent clones, use the exact coordinated commits recorded in the bundle verification report, rather than unrelated default branches.
 
-## 📜 Protobuf Schema & Calculated Fields
+## Run and reset
 
-### 1. `OmegaSolider` (Input)
-- `soldier_id` (`string`)
-- `name` (`string`)
-- `rank` (`string`)
-- `age` (`int32`)
-- `favorite_food` (`string`)
-- `favorite_tv_show` (`string`)
-- `shoe_size` (`float`)
-- `height` (`float`)
-- `weight` (`float`)
-- `lucky_number` (`int32`)
-- `hobby` (`string`)
-- `origin_planet` (`string`)
+From this repository, use a dedicated project so cleanup cannot touch another Compose project:
 
-### 2. `FireflyExpert` (Output)
-Contains **all 12 input fields** above, plus:
-- **`favorite_technology`**: Derived from `favorite_tv_show` (e.g. Star Trek/Wars -> `"Antimatter Warp Core"`, Expanse -> `"Epstein Fusion Drive"`, Matrix -> `"Neural Direct Link"`, Doctor Who -> `"TARDIS Chrono-Engine"`, Cyberpunk -> `"Sandevistan Neural Implant"`).
-- **`favorite_team`**: Derived from `origin_planet` (e.g. Mars -> `"Martian Dust Devils"`, Earth -> `"Terran Cyber Knights"`, Jupiter -> `"Great Red Spot Cyclones"`).
-- **`favorite_commander`**: Derived from `rank` (e.g. General/Commander -> `"General Kenobi"`, Captain -> `"Captain Jean-Luc Picard"`, Sergeant/Major -> `"Sergeant Avery Johnson"`).
-- **`favorite_woman`**: Derived from `|lucky_number| % 5` (0 -> `"Ada Lovelace"`, 1 -> `"Marie Curie"`, 2 -> `"Grace Hopper"`, 3 -> `"Margaret Hamilton"`, 4 -> `"Hedy Lamarr"`).
-- **`favorite_coding_language`**: Derived from `age` (<25 -> `"Rust"`, 25-34 -> `"C#"`, 35-44 -> `"Python"`, 45-54 -> `"C++"`, >=55 -> `"LISP"`).
-- **`glow_intensity`**: `(int)(height + weight * 0.5f) + (|lucky_number| % 10) + bonusGlow`.
-- **`comedic_buff`**: `"{buffName} - {title}"` when API is enabled, or graceful fallback.
-- **`processed_at_unix_ms`**: Unix epoch timestamp in milliseconds.
-
----
-
-## 🚀 How to Run Everything
-
-### Option 1: Complete Stack via Docker Compose (Recommended)
-
-To run the entire system — RabbitMQ, Mocker, Mamtzetza, Prometheus, and the automated QaaS test suite:
-
-```bash
-docker compose up --build --abort-on-container-exit --exit-code-from tests
+```powershell
+./scripts/Run-Isolated.ps1 -Reset
 ```
 
-#### What happens during execution:
-1. **RabbitMQ**: Spins up on ports `5672` and `15672` with healthcheck.
-2. **QaaS Mocker**: Listens on port `8080`, mocking GET `/api/v1/buff/{id}` and POST `/api/v1/funny-title`.
-3. **Mamtzetza**: Connects to RabbitMQ, starts consuming from `omega-solider-input-queue`, emits single-line JSON logs to stdout, and exposes Prometheus metrics on port `9090`.
-4. **Prometheus**: Automatically scrapes `http://mamtzetza:9090/metrics` every 5 seconds on host port `9091`.
-5. **QaaS Test Runner**: Generates sample soldier records, publishes them, consumes the output, executes all 8 assertions (including `OutputDeserializableTo`, `DelayByChunks`, `DelayByAverage`, `HermeticByInputOutputPercentage`, `HermeticByExpectedOutputCount`), and exits with code `0`.
+`-Reset` deletes only the `qaas-onboarding` project's containers and volumes, including old evidence and queues. Keep other applications off ports 5672, 15672, 8080 and 9090. The runner waits up to 120 seconds for an active queue consumer, empty queue, both mock HTTP routes, metrics, and actual stdout capture; it then records baseline numeric metrics and start time before publishing. There is no fixed startup sleep. Results are in `allure-results/`; exported baseline and logs are in `evidence/`.
 
----
+Equivalent commands on Linux/macOS:
 
-### Option 2: Running Observability Stack (Prometheus, Elasticsearch & Fluent Bit)
+```sh
+docker compose -p qaas-onboarding down --volumes --remove-orphans
+docker compose -p qaas-onboarding up --build --abort-on-container-exit --exit-code-from tests
+docker compose -p qaas-onboarding logs --no-color
+docker compose -p qaas-onboarding cp tests:/app/evidence/. evidence/
+docker compose -p qaas-onboarding down --volumes --remove-orphans
+```
 
-The `docker-compose.yml` includes full observability services:
+## Local development
 
-1. **Start all infrastructure & observability containers**:
-   ```bash
-   docker compose up -d rabbitmq mocker mamtzetza prometheus elasticsearch fluent-bit
-   ```
+Use the repository root as working directory so evidence paths resolve consistently. Start RabbitMQ from the isolated Compose project and run the HTTP mocker in a separate terminal:
 
-2. **Verify Prometheus Metrics**:
-   - Open your browser to `http://localhost:9091` to explore Prometheus.
-   - Search for `mamtzetza_messages_received_total` or `mamtzetza_processing_duration_seconds_bucket`.
-   - Direct raw metrics endpoint: `http://localhost:9090/metrics`.
+```powershell
+docker compose -p qaas-onboarding up -d rabbitmq
+dotnet run --project mocker/MamtzetzaMocker.csproj -- run mocker/mocker.qaas.yaml
+```
 
-3. **Verify Centralized JSON Logs in Elasticsearch**:
-   - Check Elasticsearch cluster health:
-     ```bash
-     curl -s http://localhost:9200/_cluster/health
-     ```
-   - Check indexed Mamtzetza log documents:
-     ```bash
-     curl -s http://localhost:9200/mamtzetza-logs/_search?pretty
-     ```
-   - Fluent Bit collects stdout JSON logs directly and indexes them under index `mamtzetza-logs`.
+In another terminal, from this tests repository root, set the API flag and capture path explicitly:
 
-4. **Run the tests against the live stack**:
-   ```bash
-   docker compose run --rm tests sh -c "dotnet MamtzetzaTests.dll run test-docker.qaas.yaml"
-   ```
+```powershell
+$env:ENABLE_EXTERNAL_API = 'true'
+$env:EXTERNAL_API_BASE_URL = 'http://127.0.0.1:8080'
+$env:LOG_FILE_PATH = Join-Path (Get-Location) 'evidence/mamtzetza.jsonl'
+dotnet run --project ../Mamtzetza/src/Mamtzetza/Mamtzetza.csproj
+```
 
----
+Then run `dotnet run --project tests/MamtzetzaTests.csproj -- --isolated tests/test.qaas.yaml` from this root. Reset the isolated RabbitMQ project and restart the worker before each baseline. Do not run local and Compose worker/test modes concurrently. For an API-disabled experiment, set the worker flag false and change **both** logical and metrics assertion configurations to `ExpectExternalApiEnabled: false` in a temporary YAML copy. API success/failure/off and age boundaries are independently covered in Mamtzetza unit tests; the default E2E scenario covers API success.
 
-### Option 3: Local CLI Run (Step-by-Step)
+## Eight reference specifications
 
-If developing locally without running tests inside a container:
+| ID | Assertion | Evidence and scope |
+|---|---|---|
+| 01 | FireflyLogicalAssertion | Exact preservation of all 12 fields, one-to-one IDs, five literal expected derived fields, glow, exact buff/title, current-run timestamp. Unknown fixtures fail explicitly. |
+| 02 | OutputDeserializableTo | Binary payload deserialization only. Semantic correctness is checked by 01. |
+| 03 | HermeticByExpectedOutputCount | Exactly five outputs; count alone cannot prove identity or no duplicates. |
+| 04 | HermeticByInputOutputPercentage | Count ratio 100%; ID correspondence is checked by 01. |
+| 05 | DelayByChunks | Five-message batch chunk latency with 10,000 ms configured ceiling. |
+| 06 | DelayByAverage | Batch average latency with 5,000 ms configured ceiling. |
+| 07 | MamtzetzaMetricsAssertion | Pre/post deltas: received, processed, duration count and +Inf bucket = batch count; processing errors and API failures = 0; API success = count. Reject missing/nonfinite/reset/negative values. API counter counts enrichment attempts, not individual HTTP requests. |
+| 08 | MamtzetzaLogsAssertion | Actual flushed stdout file; JSON schema, logger prefix, timestamp, unique SoldierId, expected glow and one publication per output ID. |
 
-1. **Start RabbitMQ**:
-   ```bash
-   docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=admin rabbitmq:3-management
-   ```
+[tests_specification.xlsx](tests_specification.xlsx) contains the same eight specifications. Literal expectations live in [soldiers.json](tests/fixtures/soldiers.json). Changing generator inputs requires reviewed expected fixtures; the checker deliberately rejects unreviewed cases instead of reimplementing service rules.
 
-2. **Start QaaS HTTP Mocker**:
-   ```bash
-   cd mamtzetza-qaas-tests
-   dotnet run --project mocker/MamtzetzaMocker.csproj -- run mocker/mocker.qaas.yaml
-   ```
+## Unit tests and CI
 
-3. **Start Mamtzetza**:
-   ```bash
-   cd ../Mamtzetza
-   dotnet run --project src/Mamtzetza/Mamtzetza.csproj
-   ```
+```powershell
+dotnet restore MamtzetzaTests.slnx --configfile NuGet.config
+dotnet build MamtzetzaTests.slnx --no-restore -c Release
+dotnet test regression/AssertionRegressionTests.csproj --no-build -c Release --logger trx
+```
 
-4. **Run the 8 QaaS Tests**:
-   ```bash
-   cd ../mamtzetza-qaas-tests/tests
-   dotnet run --project MamtzetzaTests.csproj -- run test.qaas.yaml
-   ```
+[CI workflow](.github/workflows/ci.yml) builds both QaaS projects, runs assertion regressions, runs the isolated Compose test and uploads logs/baseline/Allure/TRX before cleanup. CI must use the coordinated Mamtzetza commit. The workflow has no package publication, merge or deployment step. Local tests and remote CI are reported separately in the bundle.
+
+## Log capture and optional observability
+
+Mamtzetza's `LOG_FILE_PATH` duplicates its real stdout stream into a flushed file on the shared `run-evidence` volume. This is required for test 08. UTC timestamps are configured at the console formatter. The required training week needs no Elasticsearch administration.
+
+For optional full observability: `docker compose -p qaas-onboarding --profile observability up -d prometheus elasticsearch fluent-bit`. Fluent Bit now tails `/evidence/mamtzetza.jsonl` with the JSON parser and forwards to Elasticsearch; there is no unsupported claim that a bare forward input collects Docker stdout. Inspect `http://localhost:9200/mamtzetza-logs/_search?pretty` after processing. Prometheus is at `http://localhost:9091`; raw worker metrics are at `http://localhost:9090/metrics`. Optional profile validation is reported separately.

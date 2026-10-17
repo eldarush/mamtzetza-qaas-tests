@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prerequisites and operating runbook · QaaS onboarding</title><style>body{margin:0;background:#f6f8fc;color:#19283c;font:17px/1.6 system-ui,Arial,sans-serif}main,header,footer{max-width:1060px;margin:auto;padding:28px}header{border-bottom:1px solid #ccd5e3}h1{font-size:2.4rem;line-height:1.15}h2{margin-top:2em;color:#183f75}h3{margin-top:1.6em}a{color:#1259a4}a:focus{outline:3px solid #eaaa2d}nav{display:flex;gap:20px;flex-wrap:wrap}.lead{font-size:1.2rem}.notice{background:#fff3d8;border-left:5px solid #a45c00;padding:18px}.card{background:white;border:1px solid #ccd5e3;border-radius:12px;padding:20px;margin:18px 0}table{border-collapse:collapse;width:100%;background:white}td,th{text-align:left;vertical-align:top;border-bottom:1px solid #d9dfeb;padding:12px}th{background:#e7eef8}pre{background:#172b47;color:#edf5ff;padding:18px;overflow:auto;border-radius:8px}code{font-family:Consolas,monospace}li{margin:.5em 0}.muted{color:#52647c}details{background:white;padding:12px;margin:14px 0}@media(max-width:650px){body{font-size:16px}main,header,footer{padding:18px}table{display:block;overflow:auto}h1{font-size:2rem}}</style></head><body><header><nav><a href="index.html">Course index</a><a href="setup.html">Setup & runbook</a><a href="sources.html">Source references</a><a href="verification.html">Verification</a></nav></header><main><h1>Prerequisites and operating runbook</h1>
+<h2>Start from the included source snapshots</h2><p>Extract the entire ZIP. Keep <code>sources/OmegaSolider</code>, <code>sources/Mamtzetza</code> and <code>sources/mamtzetza-qaas-tests</code> together. Do not flatten the directories. The code is self-contained in this package; first restore and Docker image pulls require network access.</p>
+<p>Install .NET SDK 10.0.203, Docker Desktop with Linux containers and Compose v2, Git and PowerShell 7. Check the versions before proceeding:</p>
+<pre>dotnet --version
+docker version
+docker compose version
+git --version</pre>
+<p>Ports 5672, 15672, 8080 and 9090 must be free. Use the dedicated Compose project. Do not stop another learner's stack or delete unrelated Docker volumes.</p>
+<h2>Build and local tests</h2><pre>dotnet restore sources/Mamtzetza/Mamtzetza.slnx --configfile sources/Mamtzetza/NuGet.config
+dotnet test sources/Mamtzetza/Mamtzetza.slnx -c Release --no-restore --logger trx
+dotnet restore sources/mamtzetza-qaas-tests/MamtzetzaTests.slnx --configfile sources/mamtzetza-qaas-tests/NuGet.config
+dotnet test sources/mamtzetza-qaas-tests/regression/AssertionRegressionTests.csproj -c Release --no-restore --logger trx
+dotnet test sources/OmegaSolider/tests/OmegaSolider.ContractTests/OmegaSolider.ContractTests.csproj -c Release --logger trx</pre>
+<h2>Clean end-to-end run</h2><pre>cd sources/mamtzetza-qaas-tests
+./scripts/Run-Isolated.ps1 -Reset</pre>
+<p>The reset is destructive only to the named <code>qaas-onboarding</code> project. The runner polls readiness for up to 120 seconds, captures pre-batch metric values/start time and then executes the batch. Keep the default API flag true for the supplied E2E expectations. Every batch generates fresh IDs; run in isolation to make numeric deltas meaningful.</p>
+<h2>Evidence and cleanup</h2><p>Save <code>allure-results/</code>, <code>evidence/baseline.json</code>, <code>evidence/mamtzetza.jsonl</code>, <code>evidence/compose.log</code>, test exit code and TRX. The verification page distinguishes outputs captured for this delivery from instructions to run yourself.</p>
+<pre>docker compose -p qaas-onboarding down --volumes --remove-orphans</pre>
+<h2>Diagnose before changing code</h2><table><tr><th>Symptom</th><th>Discriminating check</th><th>Action</th></tr>
+<tr><td>Docker API unavailable</td><td><code>docker version</code> lacks server</td><td>Start Docker Desktop normally; select Linux containers. Keep security/network settings unchanged.</td></tr>
+<tr><td>Missing sibling build context</td><td>Check <code>../Mamtzetza/src/Mamtzetza/Mamtzetza.csproj</code></td><td>Restore included sibling layout.</td></tr>
+<tr><td>Readiness timeout</td><td>Broker health, queue consumers/messages, both mock routes, metrics and stdout file</td><td>Repair the specific dependency; reset only the isolated project if queues are stale.</td></tr>
+<tr><td>Buff mismatch</td><td>Compare worker API flag with both assertion configurations</td><td>Align scenario and expectations; retain off/success/failure coverage.</td></tr>
+<tr><td>Metric delta mismatch</td><td>Inspect numeric baseline/final values and other publishers</td><td>Remove concurrent traffic or investigate dropped/duplicated work. Do not substitute name checks.</td></tr>
+<tr><td>Missing actual logs</td><td>Worker LOG_FILE_PATH and shared run-evidence volume</td><td>Repair capture. Do not paste a sample log to pass the assertion.</td></tr>
+<tr><td>NuGet timeout</td><td>Restore output distinguishes network from compile/test failure</td><td>Retry supported restore on a working connection; retain failures in report.</td></tr></table>
+<p>Full Elasticsearch/Fluent Bit administration is optional. The current collector tails the actual shared stdout file. See the <a href="sources/mamtzetza-qaas-tests/README.md">tests README</a> for local-process alternatives and the optional profile.</p>
+</main><footer>QaaS application maintenance path · five focused days · offline course materials</footer></body></html>

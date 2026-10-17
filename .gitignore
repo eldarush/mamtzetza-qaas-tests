@@ -5,3 +5,5 @@ obj/
 .vs/
 .idea/
 allure-results/
+evidence/
+TestResults/

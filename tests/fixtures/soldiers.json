@@ -1,0 +1,127 @@
+[
+  {
+    "input": {
+      "soldierId": "SOL-001",
+      "name": "John Vance",
+      "rank": "Captain",
+      "age": 22,
+      "favoriteFood": "Shawarma",
+      "favoriteTvShow": "Star Trek: TNG",
+      "shoeSize": 42,
+      "height": 175,
+      "weight": 72,
+      "luckyNumber": 10,
+      "hobby": "Chess",
+      "originPlanet": "Mars"
+    },
+    "expected": {
+      "favoriteTechnology": "Antimatter Warp Core",
+      "favoriteTeam": "Martian Dust Devils",
+      "favoriteCommander": "Captain Jean-Luc Picard",
+      "favoriteWoman": "Ada Lovelace",
+      "favoriteCodingLanguage": "Rust",
+      "glowIntensity": 211,
+      "comedicBuff": "Supreme Commander of Shawarma"
+    }
+  },
+  {
+    "input": {
+      "soldierId": "SOL-002",
+      "name": "Sarah Connor",
+      "rank": "General",
+      "age": 28,
+      "favoriteFood": "Shawarma",
+      "favoriteTvShow": "The Expanse",
+      "shoeSize": 42.5,
+      "height": 178,
+      "weight": 76,
+      "luckyNumber": 11,
+      "hobby": "Astronomy",
+      "originPlanet": "Earth"
+    },
+    "expected": {
+      "favoriteTechnology": "Epstein Fusion Drive",
+      "favoriteTeam": "Terran Cyber Knights",
+      "favoriteCommander": "General Kenobi",
+      "favoriteWoman": "Marie Curie",
+      "favoriteCodingLanguage": "C#",
+      "glowIntensity": 217,
+      "comedicBuff": "Supreme Commander of Shawarma"
+    }
+  },
+  {
+    "input": {
+      "soldierId": "SOL-003",
+      "name": "James Holden",
+      "rank": "Sergeant",
+      "age": 36,
+      "favoriteFood": "Shawarma",
+      "favoriteTvShow": "The Matrix",
+      "shoeSize": 43,
+      "height": 181,
+      "weight": 80,
+      "luckyNumber": 12,
+      "hobby": "Gaming",
+      "originPlanet": "Jupiter"
+    },
+    "expected": {
+      "favoriteTechnology": "Neural Direct Link",
+      "favoriteTeam": "Great Red Spot Cyclones",
+      "favoriteCommander": "Sergeant Avery Johnson",
+      "favoriteWoman": "Grace Hopper",
+      "favoriteCodingLanguage": "Python",
+      "glowIntensity": 223,
+      "comedicBuff": "Supreme Commander of Shawarma"
+    }
+  },
+  {
+    "input": {
+      "soldierId": "SOL-004",
+      "name": "Ellen Ripley",
+      "rank": "Commander",
+      "age": 47,
+      "favoriteFood": "Shawarma",
+      "favoriteTvShow": "Doctor Who",
+      "shoeSize": 43.5,
+      "height": 184,
+      "weight": 84,
+      "luckyNumber": 13,
+      "hobby": "Robotics",
+      "originPlanet": "Moon"
+    },
+    "expected": {
+      "favoriteTechnology": "TARDIS Chrono-Engine",
+      "favoriteTeam": "Lunar Eclipse Titans",
+      "favoriteCommander": "General Kenobi",
+      "favoriteWoman": "Margaret Hamilton",
+      "favoriteCodingLanguage": "C++",
+      "glowIntensity": 229,
+      "comedicBuff": "Supreme Commander of Shawarma"
+    }
+  },
+  {
+    "input": {
+      "soldierId": "SOL-005",
+      "name": "Arthur Dent",
+      "rank": "Admiral",
+      "age": 58,
+      "favoriteFood": "Shawarma",
+      "favoriteTvShow": "Cyberpunk: Edgerunners",
+      "shoeSize": 44,
+      "height": 187,
+      "weight": 88,
+      "luckyNumber": 14,
+      "hobby": "Gardening",
+      "originPlanet": "Venus"
+    },
+    "expected": {
+      "favoriteTechnology": "Sandevistan Neural Implant",
+      "favoriteTeam": "Venusian Storm Chasers",
+      "favoriteCommander": "Admiral William Adama",
+      "favoriteWoman": "Hedy Lamarr",
+      "favoriteCodingLanguage": "LISP",
+      "glowIntensity": 235,
+      "comedicBuff": "Supreme Commander of Shawarma"
+    }
+  }
+]
